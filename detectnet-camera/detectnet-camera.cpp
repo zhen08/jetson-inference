@@ -2,8 +2,6 @@
  * http://github.com/dusty-nv/jetson-inference
  */
 
-#include "gstCamera.h"
-
 #include "glDisplay.h"
 #include "glTexture.h"
 
@@ -17,9 +15,11 @@
 
 #include "detectNet.h"
 
+#include "opencv2/imgproc.hpp"
+#include "opencv2/core.hpp"
+#include "opencv2/highgui.hpp"
 
-#define DEFAULT_CAMERA -1	// -1 for onboard camera, or change to index of /dev/video V4L2 camera (>=0)	
-		
+
 
 bool signal_recieved = false;
 
@@ -42,42 +42,22 @@ int main( int argc, char** argv )
 		
 	printf("\n\n");
 	
-
-	/*
-	 * parse network type from CLI arguments
-	 */
-	/*detectNet::NetworkType networkType = detectNet::PEDNET_MULTI;
-
-	if( argc > 1 )
-	{
-		if( strcmp(argv[1], "multiped") == 0 || strcmp(argv[1], "pednet") == 0 || strcmp(argv[1], "multiped-500") == 0 )
-			networkType = detectNet::PEDNET_MULTI;
-		else if( strcmp(argv[1], "ped-100") == 0 )
-			networkType = detectNet::PEDNET;
-		else if( strcmp(argv[1], "facenet") == 0 || strcmp(argv[1], "facenet-120") == 0 || strcmp(argv[1], "face-120") == 0 )
-			networkType = detectNet::FACENET;
-	}*/
-	
 	if( signal(SIGINT, sig_handler) == SIG_ERR )
 		printf("\ncan't catch SIGINT\n");
 
+	cv::VideoCapture capture(argv[argc-1]);
 
-	/*
-	 * create the camera device
-	 */
-	gstCamera* camera = gstCamera::Create(DEFAULT_CAMERA);
-	
-	if( !camera )
-	{
-		printf("\ndetectnet-camera:  failed to initialize video device\n");
-		return 0;
+	if (!capture->isOpened()) {
+		printf("Error opening the stream");
+		return;
 	}
-	
-	printf("\ndetectnet-camera:  successfully initialized video device\n");
-	printf("    width:  %u\n", camera->GetWidth());
-	printf("   height:  %u\n", camera->GetHeight());
-	printf("    depth:  %u (bpp)\n\n", camera->GetPixelDepth());
-	
+
+	Mat frame;
+
+	if (!capture->read(frame)) {
+		printf("Error capturing the first fame");
+		return;
+    }
 
 	/*
 	 * create detectNet
@@ -121,7 +101,7 @@ int main( int argc, char** argv )
 	}
 	else
 	{
-		texture = glTexture::Create(camera->GetWidth(), camera->GetHeight(), GL_RGBA32F_ARB/*GL_RGBA8*/);
+		texture = glTexture::Create(frame.cols, frame.rows, GL_RGBA32F_ARB/*GL_RGBA8*/);
 
 		if( !texture )
 			printf("detectnet-camera:  failed to create openGL texture\n");
@@ -133,18 +113,6 @@ int main( int argc, char** argv )
 	 */
 	cudaFont* font = cudaFont::Create();
 	
-
-	/*
-	 * start streaming
-	 */
-	if( !camera->Open() )
-	{
-		printf("\ndetectnet-camera:  failed to open camera for streaming\n");
-		return 0;
-	}
-	
-	printf("\ndetectnet-camera:  camera open for streaming\n");
-	
 	
 	/*
 	 * processing loop
@@ -153,23 +121,21 @@ int main( int argc, char** argv )
 	
 	while( !signal_recieved )
 	{
-		void* imgCPU  = NULL;
-		void* imgCUDA = NULL;
-		
 		// get the latest frame
-		if( !camera->Capture(&imgCPU, &imgCUDA, 1000) )
+		if (!capture->read(frame)) 
 			printf("\ndetectnet-camera:  failed to capture frame\n");
 
-		// convert from YUV to RGBA
-		void* imgRGBA = NULL;
-		
-		if( !camera->ConvertRGBA(imgCUDA, &imgRGBA) )
-			printf("detectnet-camera:  failed to convert from NV12 to RGBA\n");
+		Mat rgbaFrame,rgbaFrameF;
+		cv::cvtColor(frame, rgbaFrame, CV_BGR2RGBA, 4);
+		rgbaFrame.convertTo(rgbaFrameF,CV_32F);
 
+		// convert to RGBA
+		void* imgRGBA = rgbaFrameF.ptr<float>();
+		
 		// classify image with detectNet
 		int numBoundingBoxes = maxBoxes;
 	
-		if( net->Detect((float*)imgRGBA, camera->GetWidth(), camera->GetHeight(), bbCPU, &numBoundingBoxes, confCPU))
+		if( net->Detect((float*)imgRGBA, frame.cols, frame.rows, bbCPU, &numBoundingBoxes, confCPU))
 		{
 			printf("%i bounding boxes detected\n", numBoundingBoxes);
 		
@@ -226,7 +192,7 @@ int main( int argc, char** argv )
 				// rescale image pixel intensities for display
 				CUDA(cudaNormalizeRGBA((float4*)imgRGBA, make_float2(0.0f, 255.0f), 
 								   (float4*)imgRGBA, make_float2(0.0f, 1.0f), 
-		 						   camera->GetWidth(), camera->GetHeight()));
+		 						   frame.cols, frame.rows));
 
 				// map from CUDA to openGL using GL interop
 				void* tex_map = texture->MapCUDA();
@@ -247,15 +213,7 @@ int main( int argc, char** argv )
 	
 	printf("\ndetectnet-camera:  un-initializing video device\n");
 	
-	
-	/*
-	 * shutdown the camera device
-	 */
-	if( camera != NULL )
-	{
-		delete camera;
-		camera = NULL;
-	}
+	capture.release();
 
 	if( display != NULL )
 	{

@@ -19,6 +19,7 @@ if( ${BUILD_DEPS} )
 	message("Finished installing dependencies")
 endif()
 
+find_package( OpenCV REQUIRED )
 
 # Qt is used to load images (installed by ubuntu-desktop)
 find_package(Qt4 REQUIRED)
@@ -61,7 +62,7 @@ file(GLOB inferenceSources *.cpp *.cu util/*.cpp util/camera/*.cpp util/cuda/*.c
 file(GLOB inferenceIncludes *.h util/*.h util/camera/*.h util/cuda/*.h util/display/*.h)
 
 cuda_add_library(jetson-inference SHARED ${inferenceSources})
-target_link_libraries(jetson-inference nvcaffe_parser nvinfer Qt4::QtGui GL GLEW gstreamer-1.0 gstapp-1.0)		# gstreamer-0.10 gstbase-0.10 gstapp-0.10 
+target_link_libraries(jetson-inference nvcaffe_parser nvinfer Qt4::QtGui GL GLEW gstreamer-1.0 gstapp-1.0 ${OpenCV_LIBS} )		# gstreamer-0.10 gstbase-0.10 gstapp-0.10 
 
 
 # transfer all headers to the include directory
