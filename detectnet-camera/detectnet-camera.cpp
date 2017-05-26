@@ -19,7 +19,7 @@
 #include "opencv2/core.hpp"
 #include "opencv2/highgui.hpp"
 
-
+using namespace cv;
 
 bool signal_recieved = false;
 
@@ -35,6 +35,9 @@ void sig_handler(int signo)
 
 int main( int argc, char** argv )
 {
+	Mat frame;
+	Mat rgbaFrame,rgbaFrameF;
+
 	printf("detectnet-camera\n  args (%i):  ", argc);
 
 	for( int i=0; i < argc; i++ )
@@ -45,18 +48,16 @@ int main( int argc, char** argv )
 	if( signal(SIGINT, sig_handler) == SIG_ERR )
 		printf("\ncan't catch SIGINT\n");
 
-	cv::VideoCapture capture(argv[argc-1]);
+	VideoCapture capture(argv[argc-1]);
 
 	if (!capture.isOpened()) {
 		printf("Error opening the stream");
-		return;
+		return 0;
 	}
-
-	Mat frame;
 
 	if (!capture.read(frame)) {
 		printf("Error capturing the first fame");
-		return;
+		return 0;
     }
 
 	/*
@@ -125,7 +126,6 @@ int main( int argc, char** argv )
 		if (!capture.read(frame)) 
 			printf("\ndetectnet-camera:  failed to capture frame\n");
 
-		Mat rgbaFrame,rgbaFrameF;
 		cv::cvtColor(frame, rgbaFrame, CV_BGR2RGBA, 4);
 		rgbaFrame.convertTo(rgbaFrameF,CV_32F);
 
