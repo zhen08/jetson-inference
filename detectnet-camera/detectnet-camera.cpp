@@ -47,14 +47,14 @@ int main( int argc, char** argv )
 
 	cv::VideoCapture capture(argv[argc-1]);
 
-	if (!capture->isOpened()) {
+	if (!capture.isOpened()) {
 		printf("Error opening the stream");
 		return;
 	}
 
 	Mat frame;
 
-	if (!capture->read(frame)) {
+	if (!capture.read(frame)) {
 		printf("Error capturing the first fame");
 		return;
     }
@@ -122,7 +122,7 @@ int main( int argc, char** argv )
 	while( !signal_recieved )
 	{
 		// get the latest frame
-		if (!capture->read(frame)) 
+		if (!capture.read(frame)) 
 			printf("\ndetectnet-camera:  failed to capture frame\n");
 
 		Mat rgbaFrame,rgbaFrameF;
