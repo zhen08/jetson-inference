@@ -9,6 +9,7 @@
 #include <QImage>
 #include <stdio.h>
 #include <sys/time.h>
+#include <unistd.h>
 
 #define IMG_FILE_NAME "/dev/shm/detectped.jpg"
 #define START_FILE_NAME "/dev/shm/detectped.start"
@@ -35,7 +36,7 @@ void sig_handler(int signo) {
 }
 
 bool loadImage(float4 **cpu, float4 **gpu, int *width, int *height) {
-  if (!file_exist(START_FILE_NAME))
+  if (0 != access(START_FILE_NAME, 0))
     return false;
   remove(START_FILE_NAME);
 
