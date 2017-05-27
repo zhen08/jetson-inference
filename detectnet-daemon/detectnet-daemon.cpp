@@ -132,13 +132,15 @@ int main(int argc, char **argv) {
         printf("detectnet-console:  failed to classify '%s'\n", IMG_FILE_NAME);
         numBoundingBoxes = 0;
       }
-      FILE *f = fopen("OUTPUT_FILE_NAME", "w");
-      if (f == NULL) {
+	  printf("writing output file");
+      FILE *fd = fopen("OUTPUT_FILE_NAME", "w");
+      if (fd == NULL) {
         printf("Error opening file!\n");
         return 0;
       }
-      fprintf(f, "%d", numBoundingBoxes);
-      fclose(f);
+      fprintf(fd, "%d \n", numBoundingBoxes);
+      fclose(fd);
+	  printf(" done.\n");
     }
     sleep(1);
   }
