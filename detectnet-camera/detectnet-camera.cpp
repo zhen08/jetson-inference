@@ -145,7 +145,7 @@ int main( int argc, char** argv )
 		waitKey(300);
 
 		// convert to RGBA
-		void* imgRGBA = rgbaFrameF.ptr<float>();
+		float* imgRGBA = rgbaFrameF.ptr<float>();
 		
 		// classify image with detectNet
 		int numBoundingBoxes = maxBoxes;
