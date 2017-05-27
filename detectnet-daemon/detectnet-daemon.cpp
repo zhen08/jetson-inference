@@ -10,6 +10,7 @@
 #include <stdio.h>
 #include <sys/time.h>
 #include <unistd.h>
+#include <signal.h>
 
 #define IMG_FILE_NAME "/dev/shm/detectped.jpg"
 #define START_FILE_NAME "/dev/shm/detectped.start"
