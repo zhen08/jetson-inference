@@ -96,6 +96,7 @@ add_subdirectory(imagenet-camera)
 
 add_subdirectory(detectnet-console)
 add_subdirectory(detectnet-camera)
+add_subdirectory(detectnet-daemon)
 
 add_subdirectory(segnet-console)
 
