@@ -94,9 +94,11 @@ int main(int argc, char **argv) {
   facenet->EnableProfiler();
 
   // alloc memory for bounding box & confidence value output arrays
-  const uint32_t maxBoxes = net->GetMaxBoundingBoxes();
-  printf("maximum bounding boxes:  %u\n", maxBoxes);
-  const uint32_t classes = net->GetNumClasses();
+  const uint32_t maxPedBoxes = pednet->GetMaxBoundingBoxes();
+  const uint32_t maxFaceBoxes = facenet->GetMaxBoundingBoxes();
+
+  const uint32_t classes = pednet->GetNumClasses();
+  const uint32_t FaceClasses = facenet->GetNumClasses();
 
   float *bbCPU = NULL;
   float *bbCUDA = NULL;
@@ -104,12 +106,26 @@ int main(int argc, char **argv) {
   float *confCUDA = NULL;
 
   if (!cudaAllocMapped((void **)&bbCPU, (void **)&bbCUDA,
-                       maxBoxes * sizeof(float4)) ||
+                       maxPedBoxes * sizeof(float4)) ||
       !cudaAllocMapped((void **)&confCPU, (void **)&confCUDA,
-                       maxBoxes * classes * sizeof(float))) {
+                       maxPedBoxes * classes * sizeof(float))) {
     printf("detectnet-console:  failed to alloc output memory\n");
     return 0;
   }
+
+  float *bbFaceCPU = NULL;
+  float *bbFaceCUDA = NULL;
+  float *confFaceCPU = NULL;
+  float *confFaceCUDA = NULL;
+
+  if (!cudaAllocMapped((void **)&bbFaceCPU, (void **)&bbFaceCUDA,
+                       maxFaceBoxes * sizeof(float4)) ||
+      !cudaAllocMapped((void **)&confFaceCPU, (void **)&confFaceCUDA,
+                       maxFaceBoxes * FaceClasses * sizeof(float))) {
+    printf("detectnet-console:  failed to alloc output memory\n");
+    return 0;
+  }
+
 
   // load image from file on disk
   float *imgCPU = NULL;
@@ -120,8 +136,8 @@ int main(int argc, char **argv) {
   while (!signal_recieved) {
     if (loadImage((float4 **)&imgCPU, (float4 **)&imgCUDA, &imgWidth,
                   &imgHeight)) {
-      int numPedBoundingBoxes = maxBoxes;
-      int numFaceBoundingBoxes = maxBoxes;
+      int numPedBoundingBoxes = maxPedBoxes;
+      int numFaceBoundingBoxes = maxFaceBoxes;
 
       const bool result = pednet->Detect(imgCUDA, imgWidth, imgHeight, bbCPU,
                                       &numPedBoundingBoxes, confCPU);
@@ -130,8 +146,8 @@ int main(int argc, char **argv) {
         numPedBoundingBoxes = 0;
       }
 
-      const bool result = facenet->Detect(imgCUDA, imgWidth, imgHeight, bbCPU,
-                                      &numFaceBoundingBoxes, confCPU);
+      const bool result = facenet->Detect(imgCUDA, imgWidth, imgHeight, bbFaceCPU,
+                                      &numFaceBoundingBoxes, confFaceCPU);
       if (!result) {
         printf("detectnet-console:  failed to classify '%s'\n", IMG_FILE_NAME);
         numFaceBoundingBoxes = 0;
