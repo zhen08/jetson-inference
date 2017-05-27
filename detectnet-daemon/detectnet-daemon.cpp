@@ -116,7 +116,7 @@ int main(int argc, char **argv) {
   int imgHeight = 0;
 
   while (true) {
-    if (loadImage(imgFilename, (float4 **)&imgCPU, (float4 **)&imgCUDA,
+    if (loadImage((float4 **)&imgCPU, (float4 **)&imgCUDA,
                   &imgWidth, &imgHeight)) {
       int numBoundingBoxes = maxBoxes;
 
@@ -130,7 +130,7 @@ int main(int argc, char **argv) {
              current_timestamp());
 
       if (!result) {
-        printf("detectnet-console:  failed to classify '%s'\n", imgFilename);
+        printf("detectnet-console:  failed to classify '%s'\n", IMG_FILE_NAME);
       } else if (numBoundingBoxes > 0) {
         FILE *f = fopen("OUTPUT_FILE_NAME", "w");
         if (f == NULL) {
