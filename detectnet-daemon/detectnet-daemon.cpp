@@ -133,13 +133,11 @@ int main(int argc, char **argv) {
         numBoundingBoxes = 0;
       }
 	  printf("writing output file");
-      FILE *fd = fopen("OUTPUT_FILE_NAME", "w");
-      if (fd == NULL) {
-        printf("Error opening file!\n");
-        return 0;
+      FILE *fd = fopen(OUTPUT_FILE_NAME, "w");
+      if (fd != NULL) {
+        fprintf(fd, "%d\n", numBoundingBoxes);
+        fclose(fd);
       }
-      fprintf(fd, "%d \n", numBoundingBoxes);
-      fclose(fd);
 	  printf(" done.\n");
     }
     sleep(1);
