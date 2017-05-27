@@ -168,6 +168,7 @@ int main(int argc, char **argv) {
 
   printf("\nshutting down...\n");
   CUDA(cudaFreeHost(imgCPU));
-  delete net;
+  delete pednet;
+  delete facenet;
   return 0;
 }
