@@ -140,8 +140,6 @@ int main( int argc, char** argv )
 			printf("\ndetectnet-camera:  failed to capture frame\n");
 		cv::cvtColor(frame, rgbaFrame, CV_BGR2RGBA, 4);
 		rgbaFrame.convertTo(rgbaFrameF,CV_32F);
-		imwrite("original.jpg",frame);
-		imwrite("rgba.jpg",rgbaFrame);
 
 		// convert to RGBA
 		float* imgRGBA = rgbaFrameF.ptr<float>();
@@ -158,7 +156,11 @@ int main( int argc, char** argv )
 		if(net->Detect((float*)imgCPU, frame.cols, frame.rows, bbCPU, &numBoundingBoxes, confCPU))
 		{
 			printf("%i bounding boxes detected\n", numBoundingBoxes);
-		
+
+			if (numBoundingBoxes > 0) {
+				imwrite("original.jpg",frame);
+			}
+	
 			int lastClass = 0;
 			int lastStart = 0;
 			
