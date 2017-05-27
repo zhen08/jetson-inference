@@ -155,7 +155,7 @@ int main( int argc, char** argv )
 		waitKey(30);
 
 		printf("\n\n imgRGBA %d, imgCPU %d, width %d, height %d, bbCPU %d \n\n",imgRGBA,imgCPU,rgbaFrameF.cols,rgbaFrameF.rows,bbCPU);
-		if(0 && net->Detect((float*)imgCPU, frame.cols, frame.rows, bbCPU, &numBoundingBoxes, confCPU))
+		if(net->Detect((float*)imgCPU, frame.cols, frame.rows, bbCPU, &numBoundingBoxes, confCPU))
 		{
 			printf("%i bounding boxes detected\n", numBoundingBoxes);
 		
