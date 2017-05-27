@@ -81,11 +81,11 @@ int main(int argc, char **argv) {
     printf("\ncan't catch SIGINT\n");
 
   // create detectNet
-  detectNet *pednet = detectNet::Create(detectNet::PEDNET,0.5f,2);
+  detectNet *pednet = detectNet::Create(detectNet::PEDNET, 0.5f, 2);
 
-  detectNet *facenet = detectNet::Create(detectNet::FACENET,0.5f,2);
+  detectNet *facenet = detectNet::Create(detectNet::FACENET, 0.5f, 2);
 
-  if ((!pednet)||(!facenet)) {
+  if ((!pednet) || (!facenet)) {
     printf("detectnet-console:   failed to initialize detectNet\n");
     return 0;
   }
@@ -126,12 +126,13 @@ int main(int argc, char **argv) {
     return 0;
   }
 
-
   // load image from file on disk
   float *imgCPU = NULL;
   float *imgCUDA = NULL;
   int imgWidth = 0;
   int imgHeight = 0;
+
+  bool result;
 
   while (!signal_recieved) {
     if (loadImage((float4 **)&imgCPU, (float4 **)&imgCUDA, &imgWidth,
@@ -139,29 +140,28 @@ int main(int argc, char **argv) {
       int numPedBoundingBoxes = maxPedBoxes;
       int numFaceBoundingBoxes = maxFaceBoxes;
 
-      const bool result = pednet->Detect(imgCUDA, imgWidth, imgHeight, bbCPU,
-                                      &numPedBoundingBoxes, confCPU);
+      result = pednet->Detect(imgCUDA, imgWidth, imgHeight, bbCPU,
+                              &numPedBoundingBoxes, confCPU);
       if (!result) {
         printf("detectnet-console:  failed to classify '%s'\n", IMG_FILE_NAME);
         numPedBoundingBoxes = 0;
       }
 
-      const bool result = facenet->Detect(imgCUDA, imgWidth, imgHeight, bbFaceCPU,
-                                      &numFaceBoundingBoxes, confFaceCPU);
+      result = facenet->Detect(imgCUDA, imgWidth, imgHeight, bbFaceCPU,
+                               &numFaceBoundingBoxes, confFaceCPU);
       if (!result) {
         printf("detectnet-console:  failed to classify '%s'\n", IMG_FILE_NAME);
         numFaceBoundingBoxes = 0;
       }
 
-
-	  printf("writing output file");
+      printf("writing output file");
       FILE *fd = fopen(OUTPUT_FILE_NAME, "w");
       if (fd != NULL) {
         fprintf(fd, "ped,%d\n", numPedBoundingBoxes);
         fprintf(fd, "face,%d\n", numFaceBoundingBoxes);
         fclose(fd);
       }
-	  printf(" done.\n");
+      printf(" done.\n");
     }
     sleep(1);
   }
