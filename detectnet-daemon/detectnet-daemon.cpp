@@ -44,8 +44,7 @@ bool loadImage(float4 **cpu, float4 **gpu, int *width, int *height) {
     return false;
   }
 
-  if (*width != 0 && *height != 0)
-    qImg = qImg.scaled(*width, *height, Qt::IgnoreAspectRatio);
+  remove(IMG_FILE_NAME);
 
   const uint32_t imgWidth = qImg.width();
   const uint32_t imgHeight = qImg.height();
@@ -116,7 +115,6 @@ int main(int argc, char **argv) {
   int imgHeight = 0;
 
   while (!signal_recieved) {
-    sleep(100);
     if (loadImage((float4 **)&imgCPU, (float4 **)&imgCUDA, &imgWidth,
                   &imgHeight)) {
       int numBoundingBoxes = maxBoxes;
@@ -132,16 +130,17 @@ int main(int argc, char **argv) {
 
       if (!result) {
         printf("detectnet-console:  failed to classify '%s'\n", IMG_FILE_NAME);
-      } else if (numBoundingBoxes > 0) {
-        FILE *f = fopen("OUTPUT_FILE_NAME", "w");
-        if (f == NULL) {
-          printf("Error opening file!\n");
-          return 0;
-        }
-        fprintf(f, "%d", numBoundingBoxes);
-        fclose(f);
+        numBoundingBoxes = 0;
       }
+      FILE *f = fopen("OUTPUT_FILE_NAME", "w");
+      if (f == NULL) {
+        printf("Error opening file!\n");
+        return 0;
+      }
+      fprintf(f, "%d", numBoundingBoxes);
+      fclose(f);
     }
+    sleep(1);
   }
 
   printf("\nshutting down...\n");
