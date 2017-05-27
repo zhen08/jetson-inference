@@ -59,7 +59,15 @@ int main( int argc, char** argv )
 		printf("Error capturing the first fame");
 		return 0;
     }
+	printf("Frame width %d  height %d",frame.cols,frame.rows);
 
+	for (int ii=0;i<100;i++) {
+		if (!capture.read(frame)) 
+			printf("\ndetectnet-camera:  failed to capture frame\n");
+		imshow("captured",frame);
+		waitKey(30);
+	}
+	
 	/*
 	 * create detectNet
 	 */
@@ -125,7 +133,6 @@ int main( int argc, char** argv )
 		// get the latest frame
 		if (!capture.read(frame)) 
 			printf("\ndetectnet-camera:  failed to capture frame\n");
-		imshow("captured",frame);
 		cv::cvtColor(frame, rgbaFrame, CV_BGR2RGBA, 4);
 		rgbaFrame.convertTo(rgbaFrameF,CV_32F);
 
