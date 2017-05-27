@@ -106,8 +106,8 @@ int main( int argc, char** argv )
 	/*
 	 * create openGL window
 	 */
-	// glDisplay* display = glDisplay::Create();
-	// glTexture* texture = NULL;
+	 glDisplay* display = NULL; glDisplay::Create();
+	 glTexture* texture = NULL;
 	
 	if( !display ) {
 		printf("\ndetectnet-camera:  failed to create openGL display\n");
