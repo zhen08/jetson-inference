@@ -61,13 +61,13 @@ int main( int argc, char** argv )
     }
 	printf("Frame width %d  height %d",frame.cols,frame.rows);
 
-	for (int ii=0;ii<10;ii++) {
-		if (!capture.read(frame)) 
-			printf("\ndetectnet-camera:  failed to capture frame\n");
-		cv::cvtColor(frame, rgbaFrame, CV_BGR2RGBA, 4);
-		imshow("captured",rgbaFrame);
-		waitKey(30);
-	}
+	// for (int ii=0;ii<10;ii++) {
+	// 	if (!capture.read(frame)) 
+	// 		printf("\ndetectnet-camera:  failed to capture frame\n");
+	// 	cv::cvtColor(frame, rgbaFrame, CV_BGR2RGBA, 4);
+	// 	imshow("captured",rgbaFrame);
+	// 	waitKey(30);
+	// }
 
 	/*
 	 * create detectNet
@@ -87,12 +87,15 @@ int main( int argc, char** argv )
 	const uint32_t maxBoxes = net->GetMaxBoundingBoxes();		printf("maximum bounding boxes:  %u\n", maxBoxes);
 	const uint32_t classes  = net->GetNumClasses();
 	
+	float* imgCPU  = NULL;
+	float* imgCUDA = NULL;
 	float* bbCPU    = NULL;
 	float* bbCUDA   = NULL;
 	float* confCPU  = NULL;
 	float* confCUDA = NULL;
 	
 	if( !cudaAllocMapped((void**)&bbCPU, (void**)&bbCUDA, maxBoxes * sizeof(float4)) ||
+		!cudaAllocMapped((void**)&imgCPU, (void**)&imgCUDA, frame.cols * frame.rows * sizeof(float4)) ||
 	    !cudaAllocMapped((void**)&confCPU, (void**)&confCUDA, maxBoxes * classes * sizeof(float)) )
 	{
 		printf("detectnet-console:  failed to alloc output memory\n");
@@ -131,13 +134,15 @@ int main( int argc, char** argv )
 	
 	while( !signal_recieved )
 	{
+		
 		// get the latest frame
 		if (!capture.read(frame)) 
 			printf("\ndetectnet-camera:  failed to capture frame\n");
+		Mat rgbaFrame(frame.rows, frame.cols,CV_32FC4,imgCPU);
 		cv::cvtColor(frame, rgbaFrame, CV_BGR2RGBA, 4);
 		rgbaFrame.convertTo(rgbaFrameF,CV_32F);
 
-		imshow("captured",frame);
+		imshow("captured",rgbaFrame);
 		waitKey(300);
 
 		// convert to RGBA
