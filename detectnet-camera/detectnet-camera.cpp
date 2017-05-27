@@ -142,8 +142,6 @@ int main( int argc, char** argv )
 		rgbaFrame.convertTo(rgbaFrameF,CV_32F);
 		imwrite("original.jpg",frame);
 		imwrite("rgba.jpg",rgbaFrame);
-		imshow("captured",rgbaFrame);
-		waitKey(300);
 
 		// convert to RGBA
 		float* imgRGBA = rgbaFrameF.ptr<float>();
