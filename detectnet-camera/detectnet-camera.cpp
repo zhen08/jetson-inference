@@ -140,7 +140,9 @@ int main( int argc, char** argv )
 			printf("\ndetectnet-camera:  failed to capture frame\n");
 		cv::cvtColor(frame, rgbaFrame, CV_BGR2RGBA, 4);
 		rgbaFrame.convertTo(rgbaFrameF,CV_32F);
-
+		imwrite("original.jpg",frame);
+		imwrite("rgba.jpg",rgbaFrame);
+		return 0;
 		imshow("captured",rgbaFrame);
 		waitKey(300);
 
