@@ -7,10 +7,10 @@
 #include "cudaMappedMemory.h"
 
 #include <QImage>
+#include <signal.h>
 #include <stdio.h>
 #include <sys/time.h>
 #include <unistd.h>
-#include <signal.h>
 
 #define IMG_FILE_NAME "/dev/shm/detectped.jpg"
 #define START_FILE_NAME "/dev/shm/detectped.start"
@@ -116,8 +116,9 @@ int main(int argc, char **argv) {
   int imgHeight = 0;
 
   while (true) {
-    if (loadImage((float4 **)&imgCPU, (float4 **)&imgCUDA,
-                  &imgWidth, &imgHeight)) {
+    sleep(100);
+    if (loadImage((float4 **)&imgCPU, (float4 **)&imgCUDA, &imgWidth,
+                  &imgHeight)) {
       int numBoundingBoxes = maxBoxes;
 
       printf("detectnet-console:  beginning processing network (%zu)\n",
