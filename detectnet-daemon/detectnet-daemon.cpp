@@ -90,8 +90,8 @@ int main(int argc, char **argv) {
     return 0;
   }
 
-  pednet->EnableProfiler();
-  facenet->EnableProfiler();
+//   pednet->EnableProfiler();
+//   facenet->EnableProfiler();
 
   // alloc memory for bounding box & confidence value output arrays
   const uint32_t maxPedBoxes = pednet->GetMaxBoundingBoxes();
