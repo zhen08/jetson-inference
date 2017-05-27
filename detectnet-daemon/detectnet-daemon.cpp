@@ -115,7 +115,7 @@ int main(int argc, char **argv) {
   int imgWidth = 0;
   int imgHeight = 0;
 
-  while (true) {
+  while (!signal_recieved) {
     sleep(100);
     if (loadImage((float4 **)&imgCPU, (float4 **)&imgCUDA, &imgWidth,
                   &imgHeight)) {
