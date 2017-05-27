@@ -142,6 +142,7 @@ int main( int argc, char** argv )
 		// classify image with detectNet
 		int numBoundingBoxes = maxBoxes;
 	
+		printf("imgRGBA %d, width %d, height %d, bbCPU %d",imgRGBA,rgbaFrameF.cols,rgbaFrameF.rows,bbCPU);
 		if( net->Detect((float*)imgRGBA, frame.cols, frame.rows, bbCPU, &numBoundingBoxes, confCPU))
 		{
 			printf("%i bounding boxes detected\n", numBoundingBoxes);
