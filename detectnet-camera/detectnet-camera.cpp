@@ -138,7 +138,7 @@ int main( int argc, char** argv )
 		// get the latest frame
 		if (!capture.read(frame)) 
 			printf("\ndetectnet-camera:  failed to capture frame\n");
-		cv::cvtColor(frame, rgbaFrame, CV_RGB2RGBA, 4);
+		cv::cvtColor(frame, rgbaFrame, CV_BGR2RGBA, 4);
 		rgbaFrame.convertTo(rgbaFrameF,CV_32F);
 		imwrite("original.jpg",frame);
 		imwrite("rgba.jpg",rgbaFrame);
