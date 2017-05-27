@@ -61,13 +61,13 @@ int main( int argc, char** argv )
     }
 	printf("Frame width %d  height %d",frame.cols,frame.rows);
 
-	for (int ii=0;i<100;i++) {
+	for (int ii=0;ii<100;ii++) {
 		if (!capture.read(frame)) 
 			printf("\ndetectnet-camera:  failed to capture frame\n");
 		imshow("captured",frame);
 		waitKey(30);
 	}
-	
+
 	/*
 	 * create detectNet
 	 */
