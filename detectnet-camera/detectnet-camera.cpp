@@ -152,7 +152,8 @@ int main( int argc, char** argv )
 		for (int j=0;j<rgbaFrameF.rows*rgbaFrameF.cols*4;j++){
 			imgCPU[j] = imgRGBA[j];
 		} 
-
+		waitKey(30);
+		
 		printf("\n\n imgRGBA %d, imgCPU %d, width %d, height %d, bbCPU %d \n\n",imgRGBA,imgCPU,rgbaFrameF.cols,rgbaFrameF.rows,bbCPU);
 		if( net->Detect((float*)imgCPU, frame.cols, frame.rows, bbCPU, &numBoundingBoxes, confCPU))
 		{
