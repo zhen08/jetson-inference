@@ -12,9 +12,9 @@
 #include <sys/time.h>
 #include <unistd.h>
 
-#define IMG_FILE_NAME "/dev/shm/detectped.jpg"
-#define START_FILE_NAME "/dev/shm/detectped.start"
-#define OUTPUT_FILE_NAME "/dev/shm/detectped.out"
+#define IMG_FILE_NAME "/dev/shm/detect.jpg"
+#define START_FILE_NAME "/dev/shm/detect.start"
+#define OUTPUT_FILE_NAME "/dev/shm/detect.out"
 
 uint64_t current_timestamp() {
   struct timeval te;
@@ -81,14 +81,17 @@ int main(int argc, char **argv) {
     printf("\ncan't catch SIGINT\n");
 
   // create detectNet
-  detectNet *net = detectNet::Create(argc, argv);
+  detectNet *pednet = detectNet::Create(PEDNET,0.5f,2);
 
-  if (!net) {
+  detectNet *facenet = detectNet::Create(FACENET,0.5f,2);
+
+  if ((!pednet)||(!facenet)) {
     printf("detectnet-console:   failed to initialize detectNet\n");
     return 0;
   }
 
-  net->EnableProfiler();
+  pednet->EnableProfiler();
+  facenet->EnableProfiler();
 
   // alloc memory for bounding box & confidence value output arrays
   const uint32_t maxBoxes = net->GetMaxBoundingBoxes();
@@ -117,25 +120,29 @@ int main(int argc, char **argv) {
   while (!signal_recieved) {
     if (loadImage((float4 **)&imgCPU, (float4 **)&imgCUDA, &imgWidth,
                   &imgHeight)) {
-      int numBoundingBoxes = maxBoxes;
+      int numPedBoundingBoxes = maxBoxes;
+      int numFaceBoundingBoxes = maxBoxes;
 
-      printf("detectnet-console:  beginning processing network (%zu)\n",
-             current_timestamp());
-
-      const bool result = net->Detect(imgCUDA, imgWidth, imgHeight, bbCPU,
-                                      &numBoundingBoxes, confCPU);
-
-      printf("detectnet-console:  finished processing network  (%zu)\n",
-             current_timestamp());
-
+      const bool result = pednet->Detect(imgCUDA, imgWidth, imgHeight, bbCPU,
+                                      &numPedBoundingBoxes, confCPU);
       if (!result) {
         printf("detectnet-console:  failed to classify '%s'\n", IMG_FILE_NAME);
-        numBoundingBoxes = 0;
+        numPedBoundingBoxes = 0;
       }
+
+      const bool result = facenet->Detect(imgCUDA, imgWidth, imgHeight, bbCPU,
+                                      &numFaceBoundingBoxes, confCPU);
+      if (!result) {
+        printf("detectnet-console:  failed to classify '%s'\n", IMG_FILE_NAME);
+        numFaceBoundingBoxes = 0;
+      }
+
+
 	  printf("writing output file");
       FILE *fd = fopen(OUTPUT_FILE_NAME, "w");
       if (fd != NULL) {
-        fprintf(fd, "%d\n", numBoundingBoxes);
+        fprintf(fd, "ped,%d\n", numPedBoundingBoxes);
+        fprintf(fd, "face,%d\n", numFaceBoundingBoxes);
         fclose(fd);
       }
 	  printf(" done.\n");
