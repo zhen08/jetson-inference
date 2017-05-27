@@ -16,11 +16,6 @@
 #define START_FILE_NAME "/dev/shm/detectped.start"
 #define OUTPUT_FILE_NAME "/dev/shm/detectped.out"
 
-int file_exist(char *filename) {
-  struct stat buffer;
-  return (stat(filename, &buffer) == 0);
-}
-
 uint64_t current_timestamp() {
   struct timeval te;
   gettimeofday(&te, NULL);                       // get current time
