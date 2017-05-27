@@ -106,8 +106,8 @@ int main( int argc, char** argv )
 	/*
 	 * create openGL window
 	 */
-	glDisplay* display = glDisplay::Create();
-	glTexture* texture = NULL;
+	// glDisplay* display = glDisplay::Create();
+	// glTexture* texture = NULL;
 	
 	if( !display ) {
 		printf("\ndetectnet-camera:  failed to create openGL display\n");
@@ -157,9 +157,6 @@ int main( int argc, char** argv )
 		{
 			printf("%i bounding boxes detected\n", numBoundingBoxes);
 
-			if (numBoundingBoxes > 0) {
-				imwrite("original.jpg",frame);
-			}
 	
 			int lastClass = 0;
 			int lastStart = 0;
@@ -173,15 +170,21 @@ int main( int argc, char** argv )
 				
 				if( nc != lastClass || n == (numBoundingBoxes - 1) )
 				{
-					if( !net->DrawBoxes((float*)imgCPU, (float*)imgRGBA, frame.cols, frame.rows, 
-						                        bbCUDA + (lastStart * 4), (n - lastStart) + 1, lastClass) )
-						printf("detectnet-console:  failed to draw boxes\n");
+					Scalar color = Scalar( 255, 0, 0 );
+					rectangle(frame,Point(bb[0],bb[1]),Point(bb[2],bb[3]),color);
+					// if( !net->DrawBoxes((float*)imgCPU, (float*)imgRGBA, frame.cols, frame.rows, 
+					// 	                        bbCUDA + (lastStart * 4), (n - lastStart) + 1, lastClass) )
+					// 	printf("detectnet-console:  failed to draw boxes\n");
 						
 					lastClass = nc;
 					lastStart = n;
 
 					CUDA(cudaDeviceSynchronize());
 				}
+			}
+
+			if (numBoundingBoxes > 0) {
+				imwrite("original.jpg",frame);
 			}
 		
 			/*if( font != NULL )
