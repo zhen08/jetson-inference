@@ -138,11 +138,10 @@ int main( int argc, char** argv )
 		// get the latest frame
 		if (!capture.read(frame)) 
 			printf("\ndetectnet-camera:  failed to capture frame\n");
-		cv::cvtColor(frame, rgbaFrame, CV_BGR2RGBA, 4);
+		cv::cvtColor(frame, rgbaFrame, CV_RGB2RGBA, 4);
 		rgbaFrame.convertTo(rgbaFrameF,CV_32F);
 		imwrite("original.jpg",frame);
 		imwrite("rgba.jpg",rgbaFrame);
-		return 0;
 		imshow("captured",rgbaFrame);
 		waitKey(300);
 
@@ -152,12 +151,12 @@ int main( int argc, char** argv )
 		// classify image with detectNet
 		int numBoundingBoxes = maxBoxes;
 		
-		for (int j=0;j<frame.rows*frame.cols*4;j++){
-			*(imgCPU + j) = *(imgRGBA +j);
+		for (int j=0;j<rgbaFrameF.rows*rgbaFrameF.cols*4;j++){
+			imgCPU[j] = imgRGBA[j];
 		} 
 
 		printf("\n\n imgRGBA %d, imgCPU %d, width %d, height %d, bbCPU %d \n\n",imgRGBA,imgCPU,rgbaFrameF.cols,rgbaFrameF.rows,bbCPU);
-		if( net->Detect((float*)imgRGBA, frame.cols, frame.rows, bbCPU, &numBoundingBoxes, confCPU))
+		if( net->Detect((float*)imgCPU, frame.cols, frame.rows, bbCPU, &numBoundingBoxes, confCPU))
 		{
 			printf("%i bounding boxes detected\n", numBoundingBoxes);
 		
@@ -173,7 +172,7 @@ int main( int argc, char** argv )
 				
 				if( nc != lastClass || n == (numBoundingBoxes - 1) )
 				{
-					if( !net->DrawBoxes((float*)imgRGBA, (float*)imgRGBA, frame.cols, frame.rows, 
+					if( !net->DrawBoxes((float*)imgCPU, (float*)imgRGBA, frame.cols, frame.rows, 
 						                        bbCUDA + (lastStart * 4), (n - lastStart) + 1, lastClass) )
 						printf("detectnet-console:  failed to draw boxes\n");
 						
@@ -212,8 +211,8 @@ int main( int argc, char** argv )
 			if( texture != NULL )
 			{
 				// rescale image pixel intensities for display
-				CUDA(cudaNormalizeRGBA((float4*)imgRGBA, make_float2(0.0f, 255.0f), 
-								   (float4*)imgRGBA, make_float2(0.0f, 1.0f), 
+				CUDA(cudaNormalizeRGBA((float4*)imgCPU, make_float2(0.0f, 255.0f), 
+								   (float4*)imgCPU, make_float2(0.0f, 1.0f), 
 		 						   frame.cols, frame.rows));
 
 				// map from CUDA to openGL using GL interop
@@ -221,7 +220,7 @@ int main( int argc, char** argv )
 
 				if( tex_map != NULL )
 				{
-					cudaMemcpy(tex_map, imgRGBA, texture->GetSize(), cudaMemcpyDeviceToDevice);
+					cudaMemcpy(tex_map, imgCPU, texture->GetSize(), cudaMemcpyDeviceToDevice);
 					texture->Unmap();
 				}
 
