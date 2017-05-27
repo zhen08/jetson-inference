@@ -138,7 +138,6 @@ int main( int argc, char** argv )
 		// get the latest frame
 		if (!capture.read(frame)) 
 			printf("\ndetectnet-camera:  failed to capture frame\n");
-		Mat rgbaFrame(frame.rows, frame.cols,CV_32FC4,imgCPU);
 		cv::cvtColor(frame, rgbaFrame, CV_BGR2RGBA, 4);
 		rgbaFrame.convertTo(rgbaFrameF,CV_32F);
 
@@ -150,8 +149,12 @@ int main( int argc, char** argv )
 		
 		// classify image with detectNet
 		int numBoundingBoxes = maxBoxes;
-	
-		printf("imgRGBA %d, width %d, height %d, bbCPU %d",imgRGBA,rgbaFrameF.cols,rgbaFrameF.rows,bbCPU);
+		
+		for (int j=0;j<frame.rows*frame.cols*4;j++){
+			*(imgCPU + j) = *(imgRGBA +j);
+		} 
+
+		printf("\n\n imgRGBA %d, imgCPU %d, width %d, height %d, bbCPU %d \n\n",imgRGBA,imgCPU,rgbaFrameF.cols,rgbaFrameF.rows,bbCPU);
 		if( net->Detect((float*)imgRGBA, frame.cols, frame.rows, bbCPU, &numBoundingBoxes, confCPU))
 		{
 			printf("%i bounding boxes detected\n", numBoundingBoxes);
