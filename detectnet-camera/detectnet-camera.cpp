@@ -61,7 +61,7 @@ int main( int argc, char** argv )
     }
 	printf("Frame width %d  height %d",frame.cols,frame.rows);
 
-	for (int ii=0;ii<100;ii++) {
+	for (int ii=0;ii<10;ii++) {
 		if (!capture.read(frame)) 
 			printf("\ndetectnet-camera:  failed to capture frame\n");
 		imshow("captured",frame);
@@ -135,6 +135,9 @@ int main( int argc, char** argv )
 			printf("\ndetectnet-camera:  failed to capture frame\n");
 		cv::cvtColor(frame, rgbaFrame, CV_BGR2RGBA, 4);
 		rgbaFrame.convertTo(rgbaFrameF,CV_32F);
+
+		imshow("captured",frame);
+		waitKey(30);
 
 		// convert to RGBA
 		void* imgRGBA = rgbaFrameF.ptr<float>();
