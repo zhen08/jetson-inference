@@ -98,9 +98,12 @@ int main(int argc, char **argv) {
   FILE *fd = NULL;
   while (!signal_recieved) {
     if (0 == access(START_FILE_NAME, 0)) {
+      printf("open video file ");
       VideoCapture cap(VIDEO_FILE_NAME);
+      printf("done.\n");
       int frameCounter = 0;
       while (cap.read(frame)) {
+        printf(".");
         frameCounter++;
         if (fd == NULL) {
           fd = fopen(OUTPUT_FILE_NAME, "w");
