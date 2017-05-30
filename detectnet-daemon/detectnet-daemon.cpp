@@ -106,9 +106,9 @@ int main(int argc, char **argv) {
           fd = fopen(OUTPUT_FILE_NAME, "w");
         }
 
-        std::ostringstream name;
-        name << "frame" << frameCounter << ".png";
-        imwrite(name.str(), frame);
+        // std::ostringstream name;
+        // name << "frame" << frameCounter << ".png";
+        // imwrite(name.str(), frame);
 
         if ((frame.cols != FRAME_COLS) || (frame.rows != FRAME_ROWS)) {
           printf("Wrong frame size (%d,%d) \n", frame.cols, frame.rows);
