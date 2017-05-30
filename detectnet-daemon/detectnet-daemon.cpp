@@ -6,7 +6,6 @@
 
 #include "cudaMappedMemory.h"
 
-#include <QImage>
 #include <signal.h>
 #include <stdio.h>
 #include <sys/time.h>
@@ -84,7 +83,7 @@ int main(int argc, char **argv) {
                        maxPedBoxes * classes * sizeof(float)) ||
       !cudaAllocMapped((void **)&bbFaceCPU, (void **)&bbFaceCUDA,
                        maxFaceBoxes * sizeof(float4)) ||
-      !cudaAllocMapped((void **)imgCPU, (void **)imgCUDA,
+      !cudaAllocMapped((void **)&imgCPU, (void **)&imgCUDA,
                        FRAME_COLS * FRAME_ROWS * sizeof(float) * 4) ||
       !cudaAllocMapped((void **)&confFaceCPU, (void **)&confFaceCUDA,
                        maxFaceBoxes * FaceClasses * sizeof(float))) {
