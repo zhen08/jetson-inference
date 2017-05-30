@@ -132,7 +132,7 @@ int main(int argc, char **argv) {
         numPedBoundingBoxes = 0;
       }
 
-      result = facenet->Detect(imgCUDA, imgWidth, imgHeight, bbFaceCPU,
+      result = facenet->Detect(imgCUDA, FRAME_COLS, FRAME_ROWS, bbFaceCPU,
                                &numFaceBoundingBoxes, confFaceCPU);
       if (!result) {
         printf("detectnet-console:  failed to classify '%s'\n", VIDEO_FILE_NAME);
