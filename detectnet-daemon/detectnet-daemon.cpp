@@ -141,9 +141,8 @@ int main(int argc, char **argv) {
           numFaceBoundingBoxes = 0;
         }
 
-        printf("writing output file");
         if (fd != NULL) {
-          fprintf(fd, "ped,%d,face,%d\n", numPedBoundingBoxes,
+          fprintf(fd, "%d,ped,%d,face,%d\n", frameCounter, numPedBoundingBoxes,
                   numFaceBoundingBoxes);
         }
       }
