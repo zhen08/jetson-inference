@@ -97,58 +97,63 @@ int main(int argc, char **argv) {
 
   FILE *fd = NULL;
   while (!signal_recieved) {
-    VideoCapture cap(VIDEO_FILE_NAME);
-    int frameCounter = 0;
-    while (cap.read(frame)) {
-      frameCounter++;
-      if (fd == NULL) {
-        fd = fopen(OUTPUT_FILE_NAME, "w");
+    if (0 == access(START_FILE_NAME, 0)) {
+      VideoCapture cap(VIDEO_FILE_NAME);
+      int frameCounter = 0;
+      while (cap.read(frame)) {
+        frameCounter++;
+        if (fd == NULL) {
+          fd = fopen(OUTPUT_FILE_NAME, "w");
+        }
+
+        std::ostringstream name;
+        name << "frame" << frameCounter << ".png";
+        imwrite(name.str(), frame);
+
+        if ((frame.cols != FRAME_COLS) || (frame.rows != FRAME_ROWS)) {
+          printf("Wrong frame size (%d,%d) \n", frame.cols, frame.rows);
+          return false;
+        }
+
+        cvtColor(frame, rgbaFrame, CV_BGR2RGBA, 4);
+        rgbaFrame.convertTo(rgbaFrameF, CV_32F);
+        float *imgRGBA = rgbaFrameF.ptr<float>();
+        for (int j = 0; j < FRAME_COLS * FRAME_ROWS * 4; j++) {
+          imgCPU[j] = imgRGBA[j];
+        }
+
+        int numPedBoundingBoxes = maxPedBoxes;
+        int numFaceBoundingBoxes = maxFaceBoxes;
+
+        result = pednet->Detect(imgCUDA, FRAME_COLS, FRAME_ROWS, bbCPU,
+                                &numPedBoundingBoxes, confCPU);
+        if (!result) {
+          printf("detectnet-console:  failed to classify '%s'\n",
+                 VIDEO_FILE_NAME);
+          numPedBoundingBoxes = 0;
+        }
+
+        result = facenet->Detect(imgCUDA, FRAME_COLS, FRAME_ROWS, bbFaceCPU,
+                                 &numFaceBoundingBoxes, confFaceCPU);
+        if (!result) {
+          printf("detectnet-console:  failed to classify '%s'\n",
+                 VIDEO_FILE_NAME);
+          numFaceBoundingBoxes = 0;
+        }
+
+        printf("writing output file");
+        if (fd != NULL) {
+          fprintf(fd, "ped,%d,face,%d\n", numPedBoundingBoxes,
+                  numFaceBoundingBoxes);
+        }
       }
-
-      std::ostringstream name;
-      name << "frame" << frameCounter << ".png";
-      imwrite(name.str(), frame);
-
-      if ((frame.cols != FRAME_COLS) || (frame.rows != FRAME_ROWS)) {
-        printf("Wrong frame size (%d,%d) \n", frame.cols, frame.rows);
-        return false;
-      }
-
-      cvtColor(frame, rgbaFrame, CV_BGR2RGBA, 4);
-      rgbaFrame.convertTo(rgbaFrameF, CV_32F);
-      float *imgRGBA = rgbaFrameF.ptr<float>();
-      for (int j = 0; j < FRAME_COLS * FRAME_ROWS * 4; j++) {
-        imgCPU[j] = imgRGBA[j];
-      }
-
-      int numPedBoundingBoxes = maxPedBoxes;
-      int numFaceBoundingBoxes = maxFaceBoxes;
-
-      result = pednet->Detect(imgCUDA, FRAME_COLS, FRAME_ROWS, bbCPU,
-                              &numPedBoundingBoxes, confCPU);
-      if (!result) {
-        printf("detectnet-console:  failed to classify '%s'\n", VIDEO_FILE_NAME);
-        numPedBoundingBoxes = 0;
-      }
-
-      result = facenet->Detect(imgCUDA, FRAME_COLS, FRAME_ROWS, bbFaceCPU,
-                               &numFaceBoundingBoxes, confFaceCPU);
-      if (!result) {
-        printf("detectnet-console:  failed to classify '%s'\n", VIDEO_FILE_NAME);
-        numFaceBoundingBoxes = 0;
-      }
-
-      printf("writing output file");
       if (fd != NULL) {
-        fprintf(fd, "ped,%d,face,%d\n", numPedBoundingBoxes,
-                numFaceBoundingBoxes);
+        fclose(fd);
       }
+      printf(" done.\n");
+    } else {
+      sleep(1);
     }
-    if (fd != NULL) {
-      fclose(fd);
-    }
-    printf(" done.\n");
-    sleep(1);
   }
 
   printf("\nshutting down...\n");
