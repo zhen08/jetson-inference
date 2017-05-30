@@ -96,11 +96,6 @@ int main(int argc, char **argv) {
 
   Mat frame, rgbaFrame, rgbaFrameF;
 
-  if {
-    printf(LOG_CUDA "failed to allocated %zu bytes for image %s\n", imgSize,
-           IMG_FILE_NAME);
-    return false;
-  }
   FILE *fd = NULL;
   while (!signal_recieved) {
     VideoCapture cap(VIDEO_FILE_NAME);
@@ -113,12 +108,13 @@ int main(int argc, char **argv) {
 
       std::ostringstream name;
       name << "frame" << frameCounter << ".png";
-      imwrite(name.str(), dst);
+      imwrite(name.str(), frame);
 
       if ((frame.cols != FRAME_COLS) || (frame.rows != FRAME_ROWS)) {
         printf("Wrong frame size (%d,%d) \n", frame.cols, frame.rows);
         return false;
       }
+
       cvtColor(frame, rgbaFrame, CV_BGR2RGBA, 4);
       rgbaFrame.convertTo(rgbaFrameF, CV_32F);
       float *imgRGBA = rgbaFrameF.ptr<float>();
@@ -129,17 +125,17 @@ int main(int argc, char **argv) {
       int numPedBoundingBoxes = maxPedBoxes;
       int numFaceBoundingBoxes = maxFaceBoxes;
 
-      result = pednet->Detect(imgCUDA, imgWidth, imgHeight, bbCPU,
+      result = pednet->Detect(imgCUDA, FRAME_COLS, FRAME_ROWS, bbCPU,
                               &numPedBoundingBoxes, confCPU);
       if (!result) {
-        printf("detectnet-console:  failed to classify '%s'\n", IMG_FILE_NAME);
+        printf("detectnet-console:  failed to classify '%s'\n", VIDEO_FILE_NAME);
         numPedBoundingBoxes = 0;
       }
 
       result = facenet->Detect(imgCUDA, imgWidth, imgHeight, bbFaceCPU,
                                &numFaceBoundingBoxes, confFaceCPU);
       if (!result) {
-        printf("detectnet-console:  failed to classify '%s'\n", IMG_FILE_NAME);
+        printf("detectnet-console:  failed to classify '%s'\n", VIDEO_FILE_NAME);
         numFaceBoundingBoxes = 0;
       }
 
