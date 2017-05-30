@@ -1,6 +1,7 @@
 {
     "files.associations": {
         "atomic": "cpp",
-        "__locale": "cpp"
+        "__locale": "cpp",
+        "istream": "cpp"
     }
 }

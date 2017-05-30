@@ -12,9 +12,18 @@
 #include <sys/time.h>
 #include <unistd.h>
 
-#define IMG_FILE_NAME "/dev/shm/detect.jpg"
+#include "opencv2/core.hpp"
+#include "opencv2/highgui.hpp"
+#include "opencv2/imgproc.hpp"
+
+using namespace cv;
+
+#define VIDEO_FILE_NAME "/dev/shm/detect.mp4"
 #define START_FILE_NAME "/dev/shm/detect.start"
 #define OUTPUT_FILE_NAME "/dev/shm/detect.out"
+
+#define FRAME_COLS 1024
+#define FRAME_ROWS 768
 
 uint64_t current_timestamp() {
   struct timeval te;
@@ -29,50 +38,6 @@ void sig_handler(int signo) {
     printf("received SIGINT\n");
     signal_recieved = true;
   }
-}
-
-bool loadImage(float4 **cpu, float4 **gpu, int *width, int *height) {
-  if (0 != access(START_FILE_NAME, 0))
-    return false;
-  remove(START_FILE_NAME);
-
-  // load original image
-  QImage qImg;
-
-  if (!qImg.load(IMG_FILE_NAME)) {
-    printf("failed to load image %s\n", IMG_FILE_NAME);
-    return false;
-  }
-
-  remove(IMG_FILE_NAME);
-
-  const uint32_t imgWidth = qImg.width();
-  const uint32_t imgHeight = qImg.height();
-  const uint32_t imgPixels = imgWidth * imgHeight;
-  const size_t imgSize = imgWidth * imgHeight * sizeof(float) * 4;
-
-  // allocate buffer for the image
-  if (!cudaAllocMapped((void **)cpu, (void **)gpu, imgSize)) {
-    printf(LOG_CUDA "failed to allocated %zu bytes for image %s\n", imgSize,
-           IMG_FILE_NAME);
-    return false;
-  }
-
-  float4 *cpuPtr = *cpu;
-
-  for (uint32_t y = 0; y < imgHeight; y++) {
-    for (uint32_t x = 0; x < imgWidth; x++) {
-      const QRgb rgb = qImg.pixel(x, y);
-      const float4 px = make_float4(float(qRed(rgb)), float(qGreen(rgb)),
-                                    float(qBlue(rgb)), float(qAlpha(rgb)));
-
-      cpuPtr[y * imgWidth + x] = px;
-    }
-  }
-
-  *width = imgWidth;
-  *height = imgHeight;
-  return true;
 }
 
 // main entry point
@@ -90,8 +55,8 @@ int main(int argc, char **argv) {
     return 0;
   }
 
-//   pednet->EnableProfiler();
-//   facenet->EnableProfiler();
+  //   pednet->EnableProfiler();
+  //   facenet->EnableProfiler();
 
   // alloc memory for bounding box & confidence value output arrays
   const uint32_t maxPedBoxes = pednet->GetMaxBoundingBoxes();
@@ -100,43 +65,67 @@ int main(int argc, char **argv) {
   const uint32_t classes = pednet->GetNumClasses();
   const uint32_t FaceClasses = facenet->GetNumClasses();
 
+  float *imgCPU = NULL;
+  float *imgCUDA = NULL;
+
   float *bbCPU = NULL;
   float *bbCUDA = NULL;
   float *confCPU = NULL;
   float *confCUDA = NULL;
-
-  if (!cudaAllocMapped((void **)&bbCPU, (void **)&bbCUDA,
-                       maxPedBoxes * sizeof(float4)) ||
-      !cudaAllocMapped((void **)&confCPU, (void **)&confCUDA,
-                       maxPedBoxes * classes * sizeof(float))) {
-    printf("detectnet-console:  failed to alloc output memory\n");
-    return 0;
-  }
 
   float *bbFaceCPU = NULL;
   float *bbFaceCUDA = NULL;
   float *confFaceCPU = NULL;
   float *confFaceCUDA = NULL;
 
-  if (!cudaAllocMapped((void **)&bbFaceCPU, (void **)&bbFaceCUDA,
+  if (!cudaAllocMapped((void **)&bbCPU, (void **)&bbCUDA,
+                       maxPedBoxes * sizeof(float4)) ||
+      !cudaAllocMapped((void **)&confCPU, (void **)&confCUDA,
+                       maxPedBoxes * classes * sizeof(float)) ||
+      !cudaAllocMapped((void **)&bbFaceCPU, (void **)&bbFaceCUDA,
                        maxFaceBoxes * sizeof(float4)) ||
+      !cudaAllocMapped((void **)imgCPU, (void **)imgCUDA,
+                       FRAME_COLS * FRAME_ROWS * sizeof(float) * 4) ||
       !cudaAllocMapped((void **)&confFaceCPU, (void **)&confFaceCUDA,
                        maxFaceBoxes * FaceClasses * sizeof(float))) {
     printf("detectnet-console:  failed to alloc output memory\n");
     return 0;
   }
 
-  // load image from file on disk
-  float *imgCPU = NULL;
-  float *imgCUDA = NULL;
-  int imgWidth = 0;
-  int imgHeight = 0;
-
   bool result;
 
+  Mat frame, rgbaFrame, rgbaFrameF;
+
+  if {
+    printf(LOG_CUDA "failed to allocated %zu bytes for image %s\n", imgSize,
+           IMG_FILE_NAME);
+    return false;
+  }
+  FILE *fd = NULL;
   while (!signal_recieved) {
-    if (loadImage((float4 **)&imgCPU, (float4 **)&imgCUDA, &imgWidth,
-                  &imgHeight)) {
+    VideoCapture cap(VIDEO_FILE_NAME);
+    int frameCounter = 0;
+    while (cap.read(frame)) {
+      frameCounter++;
+      if (fd == NULL) {
+        fd = fopen(OUTPUT_FILE_NAME, "w");
+      }
+
+      std::ostringstream name;
+      name << "frame" << frameCounter << ".png";
+      imwrite(name.str(), dst);
+
+      if ((frame.cols != FRAME_COLS) || (frame.rows != FRAME_ROWS)) {
+        printf("Wrong frame size (%d,%d) \n", frame.cols, frame.rows);
+        return false;
+      }
+      cvtColor(frame, rgbaFrame, CV_BGR2RGBA, 4);
+      rgbaFrame.convertTo(rgbaFrameF, CV_32F);
+      float *imgRGBA = rgbaFrameF.ptr<float>();
+      for (int j = 0; j < FRAME_COLS * FRAME_ROWS * 4; j++) {
+        imgCPU[j] = imgRGBA[j];
+      }
+
       int numPedBoundingBoxes = maxPedBoxes;
       int numFaceBoundingBoxes = maxFaceBoxes;
 
@@ -155,14 +144,15 @@ int main(int argc, char **argv) {
       }
 
       printf("writing output file");
-      FILE *fd = fopen(OUTPUT_FILE_NAME, "w");
       if (fd != NULL) {
-        fprintf(fd, "ped,%d\n", numPedBoundingBoxes);
-        fprintf(fd, "face,%d\n", numFaceBoundingBoxes);
-        fclose(fd);
+        fprintf(fd, "ped,%d,face,%d\n", numPedBoundingBoxes,
+                numFaceBoundingBoxes);
       }
-      printf(" done.\n");
     }
+    if (fd != NULL) {
+      fclose(fd);
+    }
+    printf(" done.\n");
     sleep(1);
   }
 
