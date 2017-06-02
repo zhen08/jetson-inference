@@ -20,6 +20,8 @@ using namespace cv;
 #define VIDEO_FILE_NAME "/dev/shm/detect.mp4"
 #define START_FILE_NAME "/dev/shm/detect.start"
 #define OUTPUT_FILE_NAME "/dev/shm/detect.out"
+#define FRAME_FILE_PREFIX "/dev/shm/frame"
+#define FRAME_FILE_SUFIX ".jpg"
 
 #define FRAME_COLS 1024
 #define FRAME_ROWS 768
@@ -133,7 +135,7 @@ int main(int argc, char **argv) {
 
         if (numPedBoundingBoxes != 0) {
           std::ostringstream name;
-          name << "frame" << frameCounter << ".png";
+          name << FRAME_FILE_PREFIX << frameCounter << FRAME_FILE_SUFIX;
           imwrite(name.str(), frame);
           result = facenet->Detect(imgCUDA, FRAME_COLS, FRAME_ROWS, bbFaceCPU,
                                    &numFaceBoundingBoxes, confFaceCPU);
@@ -155,12 +157,12 @@ int main(int argc, char **argv) {
         for (n = 0; n < numPedBoundingBoxes; n++) {
           nc = confCPU[n * 2 + 1];
           bb = bbCPU + (n * 4);
-          fprintf(fd, ",%.2f,%.2f,%.2f,%.2f", bb[0], bb[1], bb[2], bb[3]);
+          fprintf(fd, ",%d,%d,%d,%d", (int)bb[0], (int)bb[1], (int)bb[2], (int)bb[3]);
         }
         for (n = 0; n < numFaceBoundingBoxes; n++) {
           nc = confFaceCPU[n * 2 + 1];
           bb = bbFaceCPU + (n * 4);
-          fprintf(fd, ",%.2f,%.2f,%.2f,%.2f", bb[0], bb[1], bb[2], bb[3]);
+          fprintf(fd, ",%d,%d,%d,%d", (int)bb[0], (int)bb[1], (int)bb[2], (int)bb[3]);
         }
 
         fprintf(fd, "\n");
