@@ -103,12 +103,9 @@ int main(int argc, char **argv) {
     if (0 == access(START_FILE_NAME, 0)) {
       remove(START_FILE_NAME);
       fd = fopen(TEMP_FILE_NAME, "w");
-      printf("open video file ");
       VideoCapture cap(VIDEO_FILE_NAME);
-      printf("done.\n");
       int frameCounter = 0;
       while (cap.read(frame)) {
-        printf(".");
         frameCounter++;
 
         if ((frame.cols != FRAME_COLS) || (frame.rows != FRAME_ROWS)) {
@@ -178,7 +175,6 @@ int main(int argc, char **argv) {
         fclose(fd);
       }
       rename(TEMP_FILE_NAME, OUT_FILE_NAME);
-      printf(" done.\n");
     } else {
       sleep(1);
     }
