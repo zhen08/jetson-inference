@@ -19,6 +19,7 @@ using namespace cv;
 
 #define VIDEO_FILE_NAME "/dev/shm/detect.mp4"
 #define START_FILE_NAME "/dev/shm/detect.start"
+#define TEMP_FILE_NAME "/dev/shm/detect.out"
 #define OUTPUT_FILE_NAME "/dev/shm/detect.out"
 #define FRAME_FILE_PREFIX "/dev/shm/frame"
 #define FRAME_FILE_SUFIX ".jpg"
@@ -101,7 +102,7 @@ int main(int argc, char **argv) {
   while (!signal_recieved) {
     if (0 == access(START_FILE_NAME, 0)) {
       remove(START_FILE_NAME);
-      fd = fopen(OUTPUT_FILE_NAME, "w");
+      fd = fopen(TEMP_FILE_NAME, "w");
       printf("open video file ");
       VideoCapture cap(VIDEO_FILE_NAME);
       printf("done.\n");
@@ -139,6 +140,7 @@ int main(int argc, char **argv) {
             name << FRAME_FILE_PREFIX << frameCounter << FRAME_FILE_SUFIX;
             imwrite(name.str(), frame);
           }
+
           result = facenet->Detect(imgCUDA, FRAME_COLS, FRAME_ROWS, bbFaceCPU,
                                    &numFaceBoundingBoxes, confFaceCPU);
           if (!result) {
@@ -146,35 +148,36 @@ int main(int argc, char **argv) {
                    VIDEO_FILE_NAME);
             numFaceBoundingBoxes = 0;
           }
+
+          fprintf(fd, "%d,ped,%d,face,%d", frameCounter, numPedBoundingBoxes,
+                  numFaceBoundingBoxes);
+          int n;
+          int nc;
+          float *bb;
+
+          for (n = 0; n < numPedBoundingBoxes; n++) {
+            nc = confCPU[n * 2 + 1];
+            bb = bbCPU + (n * 4);
+            fprintf(fd, ",%d,%d,%d,%d", (int)bb[0], (int)bb[1], (int)bb[2],
+                    (int)bb[3]);
+          }
+          for (n = 0; n < numFaceBoundingBoxes; n++) {
+            nc = confFaceCPU[n * 2 + 1];
+            bb = bbFaceCPU + (n * 4);
+            fprintf(fd, ",%d,%d,%d,%d", (int)bb[0], (int)bb[1], (int)bb[2],
+                    (int)bb[3]);
+          }
+
+          fprintf(fd, "\n");
         } else {
           numFaceBoundingBoxes = 0;
         }
-
-        fprintf(fd, "%d,ped,%d,face,%d", frameCounter, numPedBoundingBoxes,
-                numFaceBoundingBoxes);
-        int n;
-        int nc;
-        float *bb;
-
-        for (n = 0; n < numPedBoundingBoxes; n++) {
-          nc = confCPU[n * 2 + 1];
-          bb = bbCPU + (n * 4);
-          fprintf(fd, ",%d,%d,%d,%d", (int)bb[0], (int)bb[1], (int)bb[2],
-                  (int)bb[3]);
-        }
-        for (n = 0; n < numFaceBoundingBoxes; n++) {
-          nc = confFaceCPU[n * 2 + 1];
-          bb = bbFaceCPU + (n * 4);
-          fprintf(fd, ",%d,%d,%d,%d", (int)bb[0], (int)bb[1], (int)bb[2],
-                  (int)bb[3]);
-        }
-
-        fprintf(fd, "\n");
       }
       remove(VIDEO_FILE_NAME);
       if (fd != NULL) {
         fclose(fd);
       }
+      rename(TEMP_FILE_NAME, OUT_FILE_NAME);
       printf(" done.\n");
     } else {
       sleep(1);
