@@ -19,7 +19,7 @@ using namespace cv;
 
 #define VIDEO_FILE_NAME "/dev/shm/detect.mp4"
 #define START_FILE_NAME "/dev/shm/detect.start"
-#define TEMP_FILE_NAME "/dev/shm/detect.out"
+#define TEMP_FILE_NAME "/dev/shm/detect.tmp"
 #define OUTPUT_FILE_NAME "/dev/shm/detect.out"
 #define FRAME_FILE_PREFIX "/dev/shm/frame"
 #define FRAME_FILE_SUFIX ".jpg"
