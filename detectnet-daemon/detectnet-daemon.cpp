@@ -174,7 +174,7 @@ int main(int argc, char **argv) {
       if (fd != NULL) {
         fclose(fd);
       }
-      rename(TEMP_FILE_NAME, OUT_FILE_NAME);
+      rename(TEMP_FILE_NAME, OUTPUT_FILE_NAME);
     } else {
       sleep(1);
     }
