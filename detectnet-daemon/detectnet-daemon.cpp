@@ -45,9 +45,9 @@ int main(int argc, char **argv) {
     printf("\ncan't catch SIGINT\n");
 
   // create detectNet
-  detectNet *pednet = detectNet::Create(detectNet::PEDNET, 0.5f, 2);
+  detectNet *pednet = detectNet::Create(detectNet::PEDNET, 0.6f, 2);
 
-  detectNet *facenet = detectNet::Create(detectNet::FACENET, 0.5f, 2);
+  detectNet *facenet = detectNet::Create(detectNet::FACENET, 0.6f, 2);
 
   if ((!pednet) || (!facenet)) {
     printf("detectnet-console:   failed to initialize detectNet\n");
@@ -108,10 +108,6 @@ int main(int argc, char **argv) {
         printf(".");
         frameCounter++;
 
-        // std::ostringstream name;
-        // name << "frame" << frameCounter << ".png";
-        // imwrite(name.str(), frame);
-
         if ((frame.cols != FRAME_COLS) || (frame.rows != FRAME_ROWS)) {
           printf("Wrong frame size (%d,%d) \n", frame.cols, frame.rows);
           return false;
@@ -135,11 +131,18 @@ int main(int argc, char **argv) {
           numPedBoundingBoxes = 0;
         }
 
-        result = facenet->Detect(imgCUDA, FRAME_COLS, FRAME_ROWS, bbFaceCPU,
-                                 &numFaceBoundingBoxes, confFaceCPU);
-        if (!result) {
-          printf("detectnet-console:  failed to classify '%s'\n",
-                 VIDEO_FILE_NAME);
+        if (numPedBoundingBoxes != 0) {
+          std::ostringstream name;
+          name << "frame" << frameCounter << ".png";
+          imwrite(name.str(), frame);
+          result = facenet->Detect(imgCUDA, FRAME_COLS, FRAME_ROWS, bbFaceCPU,
+                                   &numFaceBoundingBoxes, confFaceCPU);
+          if (!result) {
+            printf("detectnet-console:  failed to classify '%s'\n",
+                   VIDEO_FILE_NAME);
+            numFaceBoundingBoxes = 0;
+          }
+        } else {
           numFaceBoundingBoxes = 0;
         }
 
@@ -152,12 +155,12 @@ int main(int argc, char **argv) {
         for (n = 0; n < numPedBoundingBoxes; n++) {
           nc = confCPU[n * 2 + 1];
           bb = bbCPU + (n * 4);
-          fprintf(fd, ",%d,%d,%d,%d", bb[0], bb[1], bb[2], bb[3]);
+          fprintf(fd, ",%.2f,%.2f,%.2f,%.2f", bb[0], bb[1], bb[2], bb[3]);
         }
         for (n = 0; n < numFaceBoundingBoxes; n++) {
           nc = confFaceCPU[n * 2 + 1];
           bb = bbFaceCPU + (n * 4);
-          fprintf(fd, ",%d,%d,%d,%d", bb[0], bb[1], bb[2], bb[3]);
+          fprintf(fd, ",%.2f,%.2f,%.2f,%.2f", bb[0], bb[1], bb[2], bb[3]);
         }
 
         fprintf(fd, "\n");
