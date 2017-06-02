@@ -133,38 +133,40 @@ int main(int argc, char **argv) {
 
         if (numPedBoundingBoxes != 0) {
           if (frameCounter == 1) {
+            result = facenet->Detect(imgCUDA, FRAME_COLS, FRAME_ROWS, bbFaceCPU,
+                                     &numFaceBoundingBoxes, confFaceCPU);
+            if (!result) {
+              printf("detectnet-console:  failed to classify '%s'\n",
+                     VIDEO_FILE_NAME);
+              numFaceBoundingBoxes = 0;
+            }
+          } else {
+            numFaceBoundingBoxes = 0;
+          }
+          fprintf(fd, "%d,ped,%d,face,%d", frameCounter, numPedBoundingBoxes,
+                  numFaceBoundingBoxes);
+          if (frameCounter == 1) {
             std::ostringstream name;
             name << FRAME_FILE_PREFIX << frameCounter << FRAME_FILE_SUFIX;
             imwrite(name.str(), frame);
-          }
 
-          result = facenet->Detect(imgCUDA, FRAME_COLS, FRAME_ROWS, bbFaceCPU,
-                                   &numFaceBoundingBoxes, confFaceCPU);
-          if (!result) {
-            printf("detectnet-console:  failed to classify '%s'\n",
-                   VIDEO_FILE_NAME);
-            numFaceBoundingBoxes = 0;
-          }
+            int n;
+            int nc;
+            float *bb;
 
-          fprintf(fd, "%d,ped,%d,face,%d", frameCounter, numPedBoundingBoxes,
-                  numFaceBoundingBoxes);
-          int n;
-          int nc;
-          float *bb;
-
-          for (n = 0; n < numPedBoundingBoxes; n++) {
-            nc = confCPU[n * 2 + 1];
-            bb = bbCPU + (n * 4);
-            fprintf(fd, ",%d,%d,%d,%d", (int)bb[0], (int)bb[1], (int)bb[2],
-                    (int)bb[3]);
+            for (n = 0; n < numPedBoundingBoxes; n++) {
+              nc = confCPU[n * 2 + 1];
+              bb = bbCPU + (n * 4);
+              fprintf(fd, ",%d,%d,%d,%d", (int)bb[0], (int)bb[1], (int)bb[2],
+                      (int)bb[3]);
+            }
+            for (n = 0; n < numFaceBoundingBoxes; n++) {
+              nc = confFaceCPU[n * 2 + 1];
+              bb = bbFaceCPU + (n * 4);
+              fprintf(fd, ",%d,%d,%d,%d", (int)bb[0], (int)bb[1], (int)bb[2],
+                      (int)bb[3]);
+            }
           }
-          for (n = 0; n < numFaceBoundingBoxes; n++) {
-            nc = confFaceCPU[n * 2 + 1];
-            bb = bbFaceCPU + (n * 4);
-            fprintf(fd, ",%d,%d,%d,%d", (int)bb[0], (int)bb[1], (int)bb[2],
-                    (int)bb[3]);
-          }
-
           fprintf(fd, "\n");
         } else {
           numFaceBoundingBoxes = 0;
