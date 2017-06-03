@@ -21,8 +21,7 @@ using namespace cv;
 #define START_FILE_NAME "/dev/shm/detect.start"
 #define TEMP_FILE_NAME "/dev/shm/detect.tmp"
 #define OUTPUT_FILE_NAME "/dev/shm/detect.out"
-#define FRAME_FILE_PREFIX "/dev/shm/frame"
-#define FRAME_FILE_SUFIX ".jpg"
+#define THUMBNAIL_FILE_NAME "/dev/shm/detect.jpg"
 
 #define FRAME_COLS 1024
 #define FRAME_ROWS 768
@@ -101,6 +100,7 @@ int main(int argc, char **argv) {
   FILE *fd = NULL;
   while (!signal_recieved) {
     if (0 == access(START_FILE_NAME, 0)) {
+      bool firstDetection = true;
       remove(START_FILE_NAME);
       fd = fopen(TEMP_FILE_NAME, "w");
       VideoCapture cap(VIDEO_FILE_NAME);
@@ -131,60 +131,63 @@ int main(int argc, char **argv) {
           numPedBoundingBoxes = 0;
         }
 
-        if (numPedBoundingBoxes != 0) {
-          if (frameCounter == 1) {
-            result = facenet->Detect(imgCUDA, FRAME_COLS, FRAME_ROWS, bbFaceCPU,
-                                     &numFaceBoundingBoxes, confFaceCPU);
-            if (!result) {
-              printf("detectnet-console:  failed to classify '%s'\n",
-                     VIDEO_FILE_NAME);
-              numFaceBoundingBoxes = 0;
-            }
-          } else {
-            numFaceBoundingBoxes = 0;
-          }
-          fprintf(fd, "%d,ped,%d,face,%d", frameCounter, numPedBoundingBoxes,
-                  numFaceBoundingBoxes);
-          if (frameCounter == 1) {
-            std::ostringstream name;
-            name << FRAME_FILE_PREFIX << frameCounter << FRAME_FILE_SUFIX;
-            imwrite(name.str(), frame);
-
-            int n;
-            int nc;
-            float *bb;
-
-            for (n = 0; n < numPedBoundingBoxes; n++) {
-              nc = confCPU[n * 2 + 1];
-              bb = bbCPU + (n * 4);
-              fprintf(fd, ",%d,%d,%d,%d", (int)bb[0], (int)bb[1], (int)bb[2],
-                      (int)bb[3]);
-            }
-            for (n = 0; n < numFaceBoundingBoxes; n++) {
-              nc = confFaceCPU[n * 2 + 1];
-              bb = bbFaceCPU + (n * 4);
-              fprintf(fd, ",%d,%d,%d,%d", (int)bb[0], (int)bb[1], (int)bb[2],
-                      (int)bb[3]);
-            }
-          }
-          fprintf(fd, "\n");
-        } else {
+        result = facenet->Detect(imgCUDA, FRAME_COLS, FRAME_ROWS, bbFaceCPU,
+                                 &numFaceBoundingBoxes, confFaceCPU);
+        if (!result) {
+          printf("detectnet-console:  failed to classify '%s'\n",
+                 VIDEO_FILE_NAME);
           numFaceBoundingBoxes = 0;
         }
-      }
-      remove(VIDEO_FILE_NAME);
-      if (fd != NULL) {
-        fclose(fd);
-      }
-      rename(TEMP_FILE_NAME, OUTPUT_FILE_NAME);
-    } else {
-      sleep(1);
-    }
-  }
 
-  printf("\nshutting down...\n");
-  CUDA(cudaFreeHost(imgCPU));
-  delete pednet;
-  delete facenet;
-  return 0;
+        fprintf(fd, "%d,ped,%d,face,%d", frameCounter, numPedBoundingBoxes,
+                numFaceBoundingBoxes);
+        int n;
+        int nc;
+        float *bb;
+
+        for (n = 0; n < numPedBoundingBoxes; n++) {
+          nc = confCPU[n * 2 + 1];
+          bb = bbCPU + (n * 4);
+          fprintf(fd, ",%d,%d,%d,%d", (int)bb[0], (int)bb[1], (int)bb[2],
+                  (int)bb[3]);
+        }
+        for (n = 0; n < numFaceBoundingBoxes; n++) {
+          nc = confFaceCPU[n * 2 + 1];
+          bb = bbFaceCPU + (n * 4);
+          fprintf(fd, ",%d,%d,%d,%d", (int)bb[0], (int)bb[1], (int)bb[2],
+                  (int)bb[3]);
+        }
+        if (numPedBoundingBoxes != 0) {
+          if (firstDetection) {
+            std::ostringstream name;
+            imwrite(THUMBNAIL_FILE_NAME, frame);
+            firstDetection = false;
+          }
+        } else if (frameCounter == 1) {
+          std::ostringstream name;
+          imwrite(THUMBNAIL_FILE_NAME, frame);
+          firstDetection = false;
+        }
+        fprintf(fd, "\n");
+      }
+      else {
+        numFaceBoundingBoxes = 0;
+      }
+    }
+    remove(VIDEO_FILE_NAME);
+    if (fd != NULL) {
+      fclose(fd);
+    }
+    rename(TEMP_FILE_NAME, OUTPUT_FILE_NAME);
+  }
+  else {
+    sleep(1);
+  }
+}
+
+printf("\nshutting down...\n");
+CUDA(cudaFreeHost(imgCPU));
+delete pednet;
+delete facenet;
+return 0;
 }
