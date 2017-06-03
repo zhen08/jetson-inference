@@ -170,24 +170,19 @@ int main(int argc, char **argv) {
         }
         fprintf(fd, "\n");
       }
-      else {
-        numFaceBoundingBoxes = 0;
+      remove(VIDEO_FILE_NAME);
+      if (fd != NULL) {
+        fclose(fd);
       }
+      rename(TEMP_FILE_NAME, OUTPUT_FILE_NAME);
+    } else {
+      sleep(1);
     }
-    remove(VIDEO_FILE_NAME);
-    if (fd != NULL) {
-      fclose(fd);
-    }
-    rename(TEMP_FILE_NAME, OUTPUT_FILE_NAME);
   }
-  else {
-    sleep(1);
-  }
-}
 
-printf("\nshutting down...\n");
-CUDA(cudaFreeHost(imgCPU));
-delete pednet;
-delete facenet;
-return 0;
+  printf("\nshutting down...\n");
+  CUDA(cudaFreeHost(imgCPU));
+  delete pednet;
+  delete facenet;
+  return 0;
 }
