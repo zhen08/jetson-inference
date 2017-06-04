@@ -107,7 +107,7 @@ int main(int argc, char **argv) {
       int frameCounter = 0;
       while (cap.read(frame)) {
         frameCounter++;
-		if ((frameCounter % 20) != 1) {
+		if ((frameCounter % 50) != 1) {
 			continue;
 		}
         if ((frame.cols != FRAME_COLS) || (frame.rows != FRAME_ROWS)) {
