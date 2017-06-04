@@ -157,16 +157,9 @@ int main(int argc, char **argv) {
           fprintf(fd, ",%d,%d,%d,%d", (int)bb[0], (int)bb[1], (int)bb[2],
                   (int)bb[3]);
         }
-        if (numPedBoundingBoxes != 0) {
-          if (firstDetection) {
-            std::ostringstream name;
-            imwrite(THUMBNAIL_FILE_NAME, frame);
-            firstDetection = false;
-          }
-        } else if (frameCounter == 1) {
-          std::ostringstream name;
-          imwrite(THUMBNAIL_FILE_NAME, frame);
+        if ((numPedBoundingBoxes != 0) && (firstDetection)) {
           firstDetection = false;
+          imwrite(THUMBNAIL_FILE_NAME, frame);
         }
         fprintf(fd, "\n");
       }
