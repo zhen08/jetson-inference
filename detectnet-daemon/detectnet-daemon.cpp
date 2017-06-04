@@ -107,7 +107,9 @@ int main(int argc, char **argv) {
       int frameCounter = 0;
       while (cap.read(frame)) {
         frameCounter++;
-
+		if ((frameCounter % 5) != 1) {
+			continue;
+		}
         if ((frame.cols != FRAME_COLS) || (frame.rows != FRAME_ROWS)) {
           printf("Wrong frame size (%d,%d) \n", frame.cols, frame.rows);
           return false;
