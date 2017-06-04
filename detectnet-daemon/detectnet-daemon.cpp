@@ -47,9 +47,9 @@ int main(int argc, char **argv) {
     printf("\ncan't catch SIGINT\n");
 
   // create detectNet
-  detectNet *pednet = detectNet::Create(detectNet::PEDNET, 0.6f, 2);
+  detectNet *pednet = detectNet::Create(detectNet::PEDNET, 0.8f, 2);
 
-  detectNet *facenet = detectNet::Create(detectNet::FACENET, 0.6f, 2);
+  detectNet *facenet = detectNet::Create(detectNet::FACENET, 0.5f, 2);
 
   if ((!pednet) || (!facenet)) {
     printf("detectnet-console:   failed to initialize detectNet\n");
