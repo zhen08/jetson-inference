@@ -132,11 +132,17 @@ int main(int argc, char **argv) {
         }
 
         if (numPedBoundingBoxes != 0) {
-          result = facenet->Detect(imgCUDA, FRAME_COLS, FRAME_ROWS, bbFaceCPU,
-                                   &numFaceBoundingBoxes, confFaceCPU);
-          if (!result) {
-            printf("detectnet-console:  failed to classify '%s'\n",
-                   VIDEO_FILE_NAME);
+          if (firstDetection) {
+            firstDetection = false;
+            imwrite(THUMBNAIL_FILE_NAME, frame);
+            result = facenet->Detect(imgCUDA, FRAME_COLS, FRAME_ROWS, bbFaceCPU,
+                                     &numFaceBoundingBoxes, confFaceCPU);
+            if (!result) {
+              printf("detectnet-console:  failed to classify '%s'\n",
+                     VIDEO_FILE_NAME);
+              numFaceBoundingBoxes = 0;
+            }
+          } else {
             numFaceBoundingBoxes = 0;
           }
 
@@ -157,10 +163,6 @@ int main(int argc, char **argv) {
             bb = bbFaceCPU + (n * 4);
             fprintf(fd, ",%d,%d,%d,%d", (int)bb[0], (int)bb[1], (int)bb[2],
                     (int)bb[3]);
-          }
-          if (firstDetection) {
-            firstDetection = false;
-            imwrite(THUMBNAIL_FILE_NAME, frame);
           }
           fprintf(fd, "\n");
         }
