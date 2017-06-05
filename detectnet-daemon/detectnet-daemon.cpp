@@ -108,6 +108,9 @@ int main(int argc, char **argv) {
       while (cap.read(frame)) {
         frameCounter++;
         if ((frameCounter % 50) != 1) {
+          if (frameCounter == 2) {
+            imwrite(THUMBNAIL_FILE_NAME, frame);
+          }
           continue;
         }
         if ((frame.cols != FRAME_COLS) || (frame.rows != FRAME_ROWS)) {
@@ -168,9 +171,6 @@ int main(int argc, char **argv) {
           }
           fprintf(fd, "\n");
         }
-      }
-      if (firstDetection) {
-        imwrite(THUMBNAIL_FILE_NAME, frame);
       }
       remove(VIDEO_FILE_NAME);
       if (fd != NULL) {
