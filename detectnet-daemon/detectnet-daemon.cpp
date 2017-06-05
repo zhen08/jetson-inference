@@ -107,9 +107,9 @@ int main(int argc, char **argv) {
       int frameCounter = 0;
       while (cap.read(frame)) {
         frameCounter++;
-		if ((frameCounter % 50) != 1) {
-			continue;
-		}
+        if ((frameCounter % 50) != 1) {
+          continue;
+        }
         if ((frame.cols != FRAME_COLS) || (frame.rows != FRAME_ROWS)) {
           printf("Wrong frame size (%d,%d) \n", frame.cols, frame.rows);
           return false;
@@ -168,6 +168,9 @@ int main(int argc, char **argv) {
           }
           fprintf(fd, "\n");
         }
+      }
+      if (firstDetection) {
+        imwrite(THUMBNAIL_FILE_NAME, frame);
       }
       remove(VIDEO_FILE_NAME);
       if (fd != NULL) {
